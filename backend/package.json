@@ -1,0 +1,21 @@
+{
+  "name": "carross-backend",
+  "version": "1.0.0",
+  "description": "CarroSS - API de registro de pagos, prestamos y amortizacion de credito automotriz",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/scripts/seedUser.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express-async-errors": "^3.1.1"
+  }
+}
