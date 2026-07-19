@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const VACIO = {
   comprador: '',
@@ -16,16 +17,35 @@ const VACIO = {
   plazo_meses: '',
   iva_interes: '',
   dia_pago: 1,
+  vendedor_id: '',
+  comprador_id: '',
 };
 
 export default function Credito() {
   const { creditos, creditoActual, creditoId, seleccionarCredito, recargar } = useCredito();
+  const { usuario } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(VACIO);
   const [editandoId, setEditandoId] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [pagoBaseEstimado, setPagoBaseEstimado] = useState(null);
+
+  const [vendedores, setVendedores] = useState([]);
+  const [compradorInfo, setCompradorInfo] = useState(null); // { id, nombre, email }
+  const [cambiandoComprador, setCambiandoComprador] = useState(false);
+  const [emailComprador, setEmailComprador] = useState('');
+  const [buscandoComprador, setBuscandoComprador] = useState(false);
+  const [errorComprador, setErrorComprador] = useState('');
+  const [mostrarCrearComprador, setMostrarCrearComprador] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [nuevoPassword, setNuevoPassword] = useState('');
+
+  useEffect(() => {
+    if (usuario?.rol === 'admin') {
+      api.get('/usuarios?rol=vendedor').then(({ data }) => setVendedores(data)).catch(() => {});
+    }
+  }, [usuario]);
 
   useEffect(() => {
     if (editandoId) return;
@@ -66,16 +86,75 @@ export default function Credito() {
       plazo_meses: credito.plazo_meses,
       iva_interes: credito.iva_interes,
       dia_pago: credito.dia_pago || 1,
+      vendedor_id: credito.vendedor_id || '',
+      comprador_id: credito.comprador_id || '',
     });
+    setCompradorInfo(credito.comprador_id ? { id: credito.comprador_id, nombre: credito.comprador_nombre, email: credito.comprador_email } : null);
+    setCambiandoComprador(false);
+    setMostrarCrearComprador(false);
+    setEmailComprador('');
   }
 
   function nuevoCredito() {
     setEditandoId(null);
     setForm(VACIO);
+    setCompradorInfo(null);
+    setCambiandoComprador(true);
   }
 
   function handleChange(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
+  }
+
+  async function buscarComprador() {
+    setErrorComprador('');
+    setMostrarCrearComprador(false);
+    if (!emailComprador.trim()) {
+      setErrorComprador('Escribe un correo para buscar.');
+      return;
+    }
+    setBuscandoComprador(true);
+    try {
+      const { data } = await api.get(`/usuarios/buscar?email=${encodeURIComponent(emailComprador.trim())}`);
+      setForm((f) => ({ ...f, comprador_id: data.id }));
+      setCompradorInfo(data);
+      setCambiandoComprador(false);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setMostrarCrearComprador(true);
+      } else {
+        setErrorComprador(err.response?.data?.error || 'No se pudo buscar el comprador.');
+      }
+    } finally {
+      setBuscandoComprador(false);
+    }
+  }
+
+  async function crearYAsignarComprador() {
+    setErrorComprador('');
+    if (!nuevoNombre.trim() || nuevoPassword.length < 6) {
+      setErrorComprador('Nombre requerido y contraseña de al menos 6 caracteres.');
+      return;
+    }
+    setBuscandoComprador(true);
+    try {
+      const { data } = await api.post('/usuarios', {
+        nombre: nuevoNombre.trim(),
+        email: emailComprador.trim(),
+        password: nuevoPassword,
+        rol: 'comprador',
+      });
+      setForm((f) => ({ ...f, comprador_id: data.id }));
+      setCompradorInfo(data);
+      setCambiandoComprador(false);
+      setMostrarCrearComprador(false);
+      setNuevoNombre('');
+      setNuevoPassword('');
+    } catch (err) {
+      setErrorComprador(err.response?.data?.error || 'No se pudo crear el comprador.');
+    } finally {
+      setBuscandoComprador(false);
+    }
   }
 
   async function handleSubmit(e) {
@@ -92,7 +171,13 @@ export default function Credito() {
         plazo_meses: Number(form.plazo_meses),
         iva_interes: Number(form.iva_interes || 0),
         dia_pago: Number(form.dia_pago),
+        comprador_id: form.comprador_id || null,
       };
+      if (usuario?.rol === 'admin') {
+        payload.vendedor_id = form.vendedor_id || null;
+      } else {
+        delete payload.vendedor_id; // el vendedor siempre queda asignado a sí mismo (lo resuelve el backend)
+      }
 
       let id = editandoId;
       if (editandoId) {
@@ -196,6 +281,72 @@ export default function Credito() {
             Mensualidad estimada: <strong>{pagoBaseEstimado.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</strong>
           </div>
         )}
+
+        <hr className="border-gray-100" />
+
+        <div className="space-y-4">
+          <p className="text-sm font-semibold text-gray-600">Asignación</p>
+
+          {usuario?.rol === 'admin' ? (
+            <div>
+              <label className="label">Vendedor asignado</label>
+              <select className="input" value={form.vendedor_id} onChange={(e) => handleChange('vendedor_id', e.target.value)}>
+                <option value="">Sin asignar</option>
+                {vendedores.map((v) => (
+                  <option key={v.id} value={v.id}>{v.nombre} ({v.email})</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div>
+              <label className="label">Vendedor asignado</label>
+              <p className="text-sm text-gray-600">Tú ({usuario?.nombre})</p>
+            </div>
+          )}
+
+          <div>
+            <label className="label">Comprador asignado</label>
+            {compradorInfo && !cambiandoComprador ? (
+              <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{compradorInfo.nombre}</p>
+                  <p className="text-xs text-gray-400">{compradorInfo.email}</p>
+                </div>
+                <button type="button" className="text-xs text-brand-600 hover:text-brand-800 font-medium" onClick={() => setCambiandoComprador(true)}>
+                  Cambiar
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    className="input"
+                    type="email"
+                    placeholder="Correo del comprador"
+                    value={emailComprador}
+                    onChange={(e) => setEmailComprador(e.target.value)}
+                  />
+                  <button type="button" className="btn-secondary whitespace-nowrap" onClick={buscarComprador} disabled={buscandoComprador}>
+                    {buscandoComprador ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
+
+                {mostrarCrearComprador && (
+                  <div className="bg-amber-50 rounded-lg p-3 space-y-2">
+                    <p className="text-xs text-amber-700">No existe un comprador con ese correo. Créalo:</p>
+                    <input className="input" placeholder="Nombre completo" value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} />
+                    <input className="input" type="password" placeholder="Contraseña (mín. 6 caracteres)" value={nuevoPassword} onChange={(e) => setNuevoPassword(e.target.value)} />
+                    <button type="button" className="btn-primary text-sm w-full" onClick={crearYAsignarComprador} disabled={buscandoComprador}>
+                      {buscandoComprador ? 'Creando...' : 'Crear y asignar'}
+                    </button>
+                  </div>
+                )}
+
+                {errorComprador && <p className="text-xs text-red-600">{errorComprador}</p>}
+              </div>
+            )}
+          </div>
+        </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

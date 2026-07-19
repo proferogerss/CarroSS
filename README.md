@@ -236,4 +236,26 @@ Corre las migraciones nuevas en el servidor con:
 ```bash
 psql -h 127.0.0.1 -U appuser -d carro_ss -f backend/src/migrations/002_dia_pago.sql
 psql -h 127.0.0.1 -U appuser -d carro_ss -f backend/src/migrations/003_pagos_semanales.sql
+psql -h 127.0.0.1 -U appuser -d carro_ss -f backend/src/migrations/004_roles.sql
 ```
+
+## 6. Roles y administración
+
+CarroSS maneja 3 roles:
+
+- **admin** — acceso total: gestiona usuarios (`/usuarios`), ve y edita todos los créditos,
+  puede asignar vendedor y comprador a cada crédito, y puede eliminar créditos.
+- **vendedor** — solo ve y administra los créditos que tenga asignados (`vendedor_id`). Puede
+  crear créditos nuevos (quedan asignados a sí mismo automáticamente), registrar pagos,
+  préstamos, servicios, eventos y pagos semanales, y asignar un comprador a sus créditos
+  (buscando por correo o creando la cuenta del comprador ahí mismo). No puede gestionar
+  otros usuarios ni ver créditos de otros vendedores.
+- **comprador** — solo lectura de su propio crédito (`comprador_id`): Dashboard, Amortización
+  y Servicios. No ve "Pagos y préstamos" ni "Datos del crédito", y todos los controles de
+  edición (marcar pagado, agregar eventos, editar semanas, registrar servicios) están
+  ocultos/deshabilitados. El simulador de escenarios sí está disponible porque no guarda nada.
+
+El usuario admin inicial que ya tienes (`contacto@codenovatech.com.mx`) conserva su rol
+`admin`. Para dar de alta vendedores o compradores nuevos, usa la pantalla **Usuarios** (solo
+visible para admin) o, para compradores, el buscador/creador dentro de "Datos del crédito"
+al asignar un comprador a un crédito específico.

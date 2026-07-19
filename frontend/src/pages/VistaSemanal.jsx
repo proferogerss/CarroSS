@@ -3,7 +3,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 
-export default function VistaSemanal({ creditoId, onCambio }) {
+export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true }) {
   const [semanas, setSemanas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [fechaInicio, setFechaInicio] = useState('');
@@ -45,6 +45,7 @@ export default function VistaSemanal({ creditoId, onCambio }) {
   }
 
   async function guardarSemana(fila, cambios) {
+    if (!puedeEditar) return;
     await api.put(`/semanas/${fila.id}`, {
       monto_programado: cambios.monto_programado ?? fila.monto_programado,
       monto_pagado: cambios.monto_pagado !== undefined ? cambios.monto_pagado : fila.monto_pagado,
@@ -54,6 +55,7 @@ export default function VistaSemanal({ creditoId, onCambio }) {
   }
 
   async function togglePagado(fila) {
+    if (!puedeEditar) return;
     const nuevo = !fila.pagado;
     actualizarLocal(fila.id, 'pagado', nuevo);
     await guardarSemana(fila, { pagado: nuevo });
@@ -83,6 +85,9 @@ export default function VistaSemanal({ creditoId, onCambio }) {
   if (cargando) return <p className="text-gray-400">Cargando...</p>;
 
   if (!semanas.length) {
+    if (!puedeEditar) {
+      return <p className="text-gray-400">Aún no hay un calendario semanal configurado para este crédito.</p>;
+    }
     return (
       <div className="card max-w-md">
         <p className="text-sm font-semibold text-gray-600 mb-1">Configurar pagos semanales</p>
@@ -107,9 +112,11 @@ export default function VistaSemanal({ creditoId, onCambio }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <button className="btn-danger text-xs" onClick={() => setConfirmarEliminar(true)}>Eliminar calendario semanal</button>
-      </div>
+      {puedeEditar && (
+        <div className="flex justify-end">
+          <button className="btn-danger text-xs" onClick={() => setConfirmarEliminar(true)}>Eliminar calendario semanal</button>
+        </div>
+      )}
 
       {periodos.map((periodo) => {
         const filas = semanas.filter((s) => s.periodo === periodo);
@@ -126,13 +133,15 @@ export default function VistaSemanal({ creditoId, onCambio }) {
                   Programado: {formatoMXN(sumaProgramada)} · Pagado: {formatoMXN(sumaPagada)}
                 </p>
               </div>
-              <button
-                className="btn-secondary text-xs"
-                onClick={() => recalcularPeriodo(periodo)}
-                disabled={recalculando === periodo}
-              >
-                {recalculando === periodo ? 'Recalculando...' : 'Recalcular este mes'}
-              </button>
+              {puedeEditar && (
+                <button
+                  className="btn-secondary text-xs"
+                  onClick={() => recalcularPeriodo(periodo)}
+                  disabled={recalculando === periodo}
+                >
+                  {recalculando === periodo ? 'Recalculando...' : 'Recalcular este mes'}
+                </button>
+              )}
             </div>
 
             <table className="data-table w-full mb-2">
@@ -152,27 +161,29 @@ export default function VistaSemanal({ creditoId, onCambio }) {
                     <td>{formatoFecha(fila.fecha_programada)}</td>
                     <td>
                       <input
-                        className="input py-1"
+                        className="input py-1 disabled:opacity-60"
                         type="number"
                         step="0.01"
                         value={fila.monto_programado}
+                        disabled={!puedeEditar}
                         onChange={(e) => actualizarLocal(fila.id, 'monto_programado', e.target.value)}
                         onBlur={(e) => guardarSemana(fila, { monto_programado: Number(e.target.value) })}
                       />
                     </td>
                     <td>
                       <input
-                        className="input py-1"
+                        className="input py-1 disabled:opacity-60"
                         type="number"
                         step="0.01"
                         placeholder="—"
                         value={fila.monto_pagado ?? ''}
+                        disabled={!puedeEditar}
                         onChange={(e) => actualizarLocal(fila.id, 'monto_pagado', e.target.value)}
                         onBlur={(e) => guardarSemana(fila, { monto_pagado: e.target.value === '' ? null : Number(e.target.value) })}
                       />
                     </td>
                     <td>
-                      <input type="checkbox" checked={fila.pagado} onChange={() => togglePagado(fila)} className="w-4 h-4 accent-brand-600" />
+                      <input type="checkbox" checked={fila.pagado} disabled={!puedeEditar} onChange={() => togglePagado(fila)} className="w-4 h-4 accent-brand-600 disabled:opacity-50" />
                     </td>
                   </tr>
                 ))}

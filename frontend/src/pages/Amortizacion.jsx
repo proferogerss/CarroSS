@@ -5,12 +5,15 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import VistaSemanal from './VistaSemanal.jsx';
 
 const EVENTO_VACIO = { tipo: 'pago_extra', mes: '', monto: '', observaciones: '' };
 
 export default function Amortizacion() {
   const { creditoId } = useCredito();
+  const { usuario } = useAuth();
+  const puedeEditar = usuario?.rol !== 'comprador';
   const [vista, setVista] = useState('mensual');
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -119,7 +122,7 @@ export default function Amortizacion() {
       acciones={
         <>
           <button className="btn-secondary" onClick={() => setModalSimulador(true)}>Simular escenario</button>
-          <button className="btn-secondary" onClick={() => setModalEvento(true)}>+ Pago extra / Seguro</button>
+          {puedeEditar && <button className="btn-secondary" onClick={() => setModalEvento(true)}>+ Pago extra / Seguro</button>}
           <button className="btn-primary" onClick={exportarExcel}>Exportar Excel</button>
         </>
       }
@@ -168,7 +171,7 @@ export default function Amortizacion() {
               <p className="text-sm font-semibold text-gray-600 mb-3">Eventos aplicados al crédito</p>
               <table className="data-table w-full">
                 <thead>
-                  <tr><th>Tipo</th><th>Mes</th><th>Monto</th><th>Observaciones</th><th></th></tr>
+                  <tr><th>Tipo</th><th>Mes</th><th>Monto</th><th>Observaciones</th>{puedeEditar && <th></th>}</tr>
                 </thead>
                 <tbody>
                   {datos.eventos.map((ev) => (
@@ -182,7 +185,9 @@ export default function Amortizacion() {
                       <td>{ev.mes}</td>
                       <td>{formatoMXN(ev.monto)}</td>
                       <td>{ev.observaciones || '—'}</td>
-                      <td className="text-right"><button className="btn-danger text-xs" onClick={() => setAEliminar(ev.id)}>Eliminar</button></td>
+                      {puedeEditar && (
+                        <td className="text-right"><button className="btn-danger text-xs" onClick={() => setAEliminar(ev.id)}>Eliminar</button></td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -221,7 +226,7 @@ export default function Amortizacion() {
                     <td className="font-medium">{formatoMXN(fila.pagoTotal)}</td>
                     <td>{formatoMXN(fila.saldoFinal)}</td>
                     <td>
-                      <input type="checkbox" checked={fila.pagado} onChange={() => togglePagado(fila)} className="w-4 h-4 accent-brand-600" />
+                      <input type="checkbox" checked={fila.pagado} disabled={!puedeEditar} onChange={() => puedeEditar && togglePagado(fila)} className="w-4 h-4 accent-brand-600 disabled:opacity-50" />
                     </td>
                   </tr>
                 ))}
@@ -230,7 +235,7 @@ export default function Amortizacion() {
           </div>
         </>
       ) : (
-        <VistaSemanal creditoId={creditoId} onCambio={cargar} />
+        <VistaSemanal creditoId={creditoId} onCambio={cargar} puedeEditar={puedeEditar} />
       )}
 
       {/* Modal: registrar evento real */}

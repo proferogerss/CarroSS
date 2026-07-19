@@ -5,11 +5,14 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const VACIO = { fecha: '', kilometraje: '', precio: '', duracion_km: '5000', siguiente_km: '' };
 
 export default function Servicios() {
   const { creditoId } = useCredito();
+  const { usuario } = useAuth();
+  const puedeEditar = usuario?.rol !== 'comprador';
   const [servicios, setServicios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -72,7 +75,7 @@ export default function Servicios() {
   const totalGastado = servicios.reduce((s, x) => s + Number(x.precio), 0);
 
   return (
-    <Layout titulo="Servicios y mantenimiento" acciones={<button className="btn-primary" onClick={abrirModal}>+ Registrar servicio</button>}>
+    <Layout titulo="Servicios y mantenimiento" acciones={puedeEditar ? <button className="btn-primary" onClick={abrirModal}>+ Registrar servicio</button> : null}>
       {cargando ? (
         <p className="text-gray-400">Cargando...</p>
       ) : (
@@ -85,7 +88,7 @@ export default function Servicios() {
                 <th>Precio</th>
                 <th>Duración (km)</th>
                 <th>Siguiente servicio</th>
-                <th></th>
+                {puedeEditar && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -96,9 +99,11 @@ export default function Servicios() {
                   <td>{formatoMXN(s.precio)}</td>
                   <td>{Number(s.duracion_km).toLocaleString('es-MX')} km</td>
                   <td className="font-medium">{Number(s.siguiente_km).toLocaleString('es-MX')} km</td>
-                  <td className="text-right">
-                    <button className="btn-danger text-xs" onClick={() => setAEliminar(s.id)}>Eliminar</button>
-                  </td>
+                  {puedeEditar && (
+                    <td className="text-right">
+                      <button className="btn-danger text-xs" onClick={() => setAEliminar(s.id)}>Eliminar</button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {!servicios.length && (
@@ -109,7 +114,7 @@ export default function Servicios() {
               <tfoot>
                 <tr>
                   <td className="font-semibold">Total gastado</td>
-                  <td /><td className="font-semibold">{formatoMXN(totalGastado)}</td><td /><td /><td />
+                  <td /><td className="font-semibold">{formatoMXN(totalGastado)}</td><td /><td />{puedeEditar && <td />}
                 </tr>
               </tfoot>
             )}

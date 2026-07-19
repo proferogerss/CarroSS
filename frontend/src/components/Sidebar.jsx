@@ -3,15 +3,19 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const links = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/movimientos', label: 'Pagos y préstamos', icon: '💵' },
-  { to: '/amortizacion', label: 'Amortización', icon: '📅' },
-  { to: '/servicios', label: 'Servicios', icon: '🔧' },
-  { to: '/credito', label: 'Datos del crédito', icon: '🚗' },
+  { to: '/', label: 'Dashboard', icon: '📊', roles: ['admin', 'vendedor', 'comprador'] },
+  { to: '/movimientos', label: 'Pagos y préstamos', icon: '💵', roles: ['admin', 'vendedor'] },
+  { to: '/amortizacion', label: 'Amortización', icon: '📅', roles: ['admin', 'vendedor', 'comprador'] },
+  { to: '/servicios', label: 'Servicios', icon: '🔧', roles: ['admin', 'vendedor', 'comprador'] },
+  { to: '/credito', label: 'Datos del crédito', icon: '🚗', roles: ['admin', 'vendedor'] },
+  { to: '/usuarios', label: 'Usuarios', icon: '👥', roles: ['admin'] },
 ];
+
+const ETIQUETA_ROL = { admin: 'Administrador', vendedor: 'Vendedor', comprador: 'Comprador' };
 
 export default function Sidebar() {
   const { usuario, logout } = useAuth();
+  const visibles = links.filter((l) => l.roles.includes(usuario?.rol));
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
@@ -21,7 +25,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 py-4 px-3 space-y-1">
-        {links.map((l) => (
+        {visibles.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
@@ -40,7 +44,8 @@ export default function Sidebar() {
 
       <div className="px-4 py-4 border-t border-gray-100">
         <p className="text-sm font-medium text-gray-700 truncate">{usuario?.nombre}</p>
-        <p className="text-xs text-gray-400 truncate mb-3">{usuario?.email}</p>
+        <p className="text-xs text-gray-400 truncate">{usuario?.email}</p>
+        <p className="text-xs text-brand-600 font-medium mb-3">{ETIQUETA_ROL[usuario?.rol] || usuario?.rol}</p>
         <button onClick={logout} className="text-xs text-red-600 hover:text-red-800 font-medium">
           Cerrar sesión
         </button>
