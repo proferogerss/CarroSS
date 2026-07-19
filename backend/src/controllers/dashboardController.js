@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const { generarAmortizacion, round2 } = require('../utils/amortizacion');
+const { calcularFechaPago } = require('../utils/fechas');
 
 async function resumen(req, res) {
   const creditoId = req.params.creditoId;
@@ -39,7 +40,10 @@ async function resumen(req, res) {
   const filaActual = mesActual > 0 ? resultado.tabla.find((f) => f.mes === mesActual) : null;
   const saldoActual = filaActual ? filaActual.saldoFinal : Number(credito.monto_financiar);
 
-  const proximaFila = resultado.tabla.find((f) => f.mes === mesActual + 1) || null;
+  const proximaFilaBase = resultado.tabla.find((f) => f.mes === mesActual + 1) || null;
+  const proximaFila = proximaFilaBase
+    ? { ...proximaFilaBase, fechaProgramada: calcularFechaPago(credito.fecha_compra, credito.dia_pago, proximaFilaBase.mes) }
+    : null;
 
   const totalPagosIniciales = round2(pagos.reduce((sum, p) => sum + Number(p.monto), 0));
   const totalPrestamos = round2(prestamos.reduce((sum, p) => sum + Number(p.monto), 0));

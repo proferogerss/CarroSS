@@ -50,7 +50,11 @@ export default function Dashboard() {
         <StatCard
           etiqueta="Próxima mensualidad"
           valor={r.proximoPago ? formatoMXN(r.proximoPago.pagoTotal) : '—'}
-          subtexto={r.proximoPago ? `Mes ${r.proximoPago.mes} de ${r.plazoReal}` : 'Crédito liquidado'}
+          subtexto={
+            r.proximoPago
+              ? `Pago ${r.proximoPago.mes} de ${r.plazoReal} · ${new Date(`${r.proximoPago.fechaProgramada}T00:00:00`).toLocaleDateString('es-MX')}`
+              : 'Crédito liquidado'
+          }
           tono="warn"
         />
         <StatCard etiqueta="Meses pagados" valor={`${r.mesesPagados} / ${r.plazoReal}`} subtexto={`${r.mesesRestantes} meses restantes`} />

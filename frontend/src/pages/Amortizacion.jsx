@@ -170,7 +170,8 @@ export default function Amortizacion() {
         <table className="data-table w-full">
           <thead>
             <tr>
-              <th>Mes</th>
+              <th>Número de pago</th>
+              <th>Fecha de pago</th>
               <th>Saldo inicial</th>
               <th>Seguro</th>
               <th>Interés</th>
@@ -186,6 +187,7 @@ export default function Amortizacion() {
             {datos.tabla.map((fila) => (
               <tr key={fila.mes} className={fila.pagado ? 'bg-emerald-50/50' : ''}>
                 <td>{fila.mes}</td>
+                <td>{new Date(`${fila.fechaProgramada}T00:00:00`).toLocaleDateString('es-MX')}</td>
                 <td>{formatoMXN(fila.saldoInicial)}</td>
                 <td>{fila.cargoSeguro ? formatoMXN(fila.cargoSeguro) : '—'}</td>
                 <td>{formatoMXN(fila.interes)}</td>
@@ -214,7 +216,7 @@ export default function Amortizacion() {
             </select>
           </div>
           <div>
-            <label className="label">Mes en que se aplica</label>
+            <label className="label">Número de pago en que se aplica</label>
             <input className="input" type="number" min="1" value={formEvento.mes} onChange={(e) => setFormEvento({ ...formEvento, mes: e.target.value })} required />
           </div>
           <div>
@@ -243,7 +245,7 @@ export default function Amortizacion() {
             </select>
           </div>
           <div>
-            <label className="label">Mes en que se aplicaría</label>
+            <label className="label">Número de pago en que se aplicaría</label>
             <input className="input" type="number" min="1" value={simMes} onChange={(e) => setSimMes(e.target.value)} required />
           </div>
           <div>

@@ -1,6 +1,7 @@
 const ExcelJS = require('exceljs');
 const pool = require('../config/db');
 const { generarAmortizacion, compararEscenarios } = require('../utils/amortizacion');
+const { calcularFechaPago } = require('../utils/fechas');
 
 async function obtenerCreditoOrFail(creditoId, res) {
   const { rows } = await pool.query('SELECT * FROM creditos WHERE id = $1', [creditoId]);
@@ -34,6 +35,7 @@ async function tablaAmortizacion(req, res) {
 
   resultado.tabla = resultado.tabla.map((fila) => ({
     ...fila,
+    fechaProgramada: calcularFechaPago(credito.fecha_compra, credito.dia_pago, fila.mes),
     pagado: !!mensualidadPorMes[fila.mes]?.pagado,
     fechaPago: mensualidadPorMes[fila.mes]?.fecha_pago || null,
     montoPagado: mensualidadPorMes[fila.mes]?.monto_pagado || null,
@@ -106,20 +108,21 @@ async function exportarExcel(req, res) {
   hoja.addRow([]);
 
   const encabezado = hoja.addRow([
-    'Mes', 'Saldo inicial', 'Cargo seguro', 'Interés', 'IVA interés',
+    'Número de pago', 'Fecha de pago', 'Saldo inicial', 'Cargo seguro', 'Interés', 'IVA interés',
     'Capital', 'Abono extra', 'Capital total', 'Pago total', 'Saldo final',
   ]);
   encabezado.font = { bold: true };
 
   for (const fila of resultado.tabla) {
+    const fechaProgramada = calcularFechaPago(credito.fecha_compra, credito.dia_pago, fila.mes);
     hoja.addRow([
-      fila.mes, fila.saldoInicial, fila.cargoSeguro, fila.interes, fila.ivaInteres,
+      fila.mes, fechaProgramada, fila.saldoInicial, fila.cargoSeguro, fila.interes, fila.ivaInteres,
       fila.capital, fila.abonoExtra, fila.capitalTotal, fila.pagoTotal, fila.saldoFinal,
     ]);
   }
 
   hoja.addRow([]);
-  hoja.addRow(['Totales', '', '', resultado.totales.interes, resultado.totales.iva, resultado.totales.capital, resultado.totales.abonosExtra, '', resultado.totales.pagado, '']);
+  hoja.addRow(['Totales', '', '', '', resultado.totales.interes, resultado.totales.iva, resultado.totales.capital, resultado.totales.abonosExtra, '', resultado.totales.pagado, '']);
 
   hoja.columns.forEach((col) => { col.width = 16; });
 

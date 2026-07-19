@@ -15,6 +15,7 @@ const VACIO = {
   tasa_anual: '',
   plazo_meses: '',
   iva_interes: '',
+  dia_pago: 1,
 };
 
 export default function Credito() {
@@ -61,6 +62,7 @@ export default function Credito() {
       tasa_anual: credito.tasa_anual,
       plazo_meses: credito.plazo_meses,
       iva_interes: credito.iva_interes,
+      dia_pago: credito.dia_pago || 1,
     });
   }
 
@@ -86,6 +88,7 @@ export default function Credito() {
         tasa_anual: Number(form.tasa_anual),
         plazo_meses: Number(form.plazo_meses),
         iva_interes: Number(form.iva_interes || 0),
+        dia_pago: Number(form.dia_pago),
       };
 
       let id = editandoId;
@@ -174,6 +177,14 @@ export default function Credito() {
           <div>
             <label className="label">IVA sobre intereses (fracción, ej. 0.16)</label>
             <input className="input" type="number" step="0.0001" value={form.iva_interes} onChange={(e) => handleChange('iva_interes', e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Día de pago mensual</label>
+            <select className="input" value={form.dia_pago} onChange={(e) => handleChange('dia_pago', e.target.value)}>
+              <option value={1}>Día 1</option>
+              <option value={15}>Día 15</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">El primer pago cae el mes siguiente a la fecha de compra, en este día.</p>
           </div>
         </div>
 
