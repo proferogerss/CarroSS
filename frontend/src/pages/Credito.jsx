@@ -198,7 +198,10 @@ export default function Credito() {
   }
 
   return (
-    <Layout titulo={editandoId ? 'Editar crédito' : 'Nuevo crédito'}>
+    <Layout
+      titulo={editandoId ? 'Editar crédito' : 'Nuevo crédito'}
+      acciones={editandoId ? <button className="btn-secondary" onClick={nuevoCredito}>+ Nuevo crédito</button> : null}
+    >
       {creditos.length > 1 && (
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <span className="text-sm text-gray-500">Créditos existentes:</span>
