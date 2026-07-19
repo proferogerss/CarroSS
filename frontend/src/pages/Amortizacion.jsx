@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Layout from '../components/Layout.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
-import { formatoMXN } from '../components/StatCard.jsx';
+import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
 import VistaSemanal from './VistaSemanal.jsx';
@@ -211,7 +211,7 @@ export default function Amortizacion() {
                 {datos.tabla.map((fila) => (
                   <tr key={fila.mes} className={fila.pagado ? 'bg-emerald-50/50' : ''}>
                     <td>{fila.mes}</td>
-                    <td>{new Date(`${fila.fechaProgramada}T00:00:00`).toLocaleDateString('es-MX')}</td>
+                    <td>{formatoFecha(fila.fechaProgramada)}</td>
                     <td>{formatoMXN(fila.saldoInicial)}</td>
                     <td>{fila.cargoSeguro ? formatoMXN(fila.cargoSeguro) : '—'}</td>
                     <td>{formatoMXN(fila.interes)}</td>

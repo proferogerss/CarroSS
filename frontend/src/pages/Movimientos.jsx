@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Layout from '../components/Layout.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
-import { formatoMXN } from '../components/StatCard.jsx';
+import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
 
@@ -80,10 +80,6 @@ export default function Movimientos() {
 
   const totalPagos = pagos.reduce((s, p) => s + Number(p.monto), 0);
   const totalPrestamos = prestamos.reduce((s, p) => s + Number(p.monto), 0);
-  const totalPrestamosDeuda = prestamos
-    .filter((p) => /^prestamo/i.test((p.concepto || '').trim()))
-    .reduce((s, p) => s + Number(p.monto), 0);
-  const totalAdelantos = totalPrestamos - totalPrestamosDeuda;
 
   return (
     <Layout
@@ -121,7 +117,7 @@ export default function Movimientos() {
             <tbody>
               {pagos.map((p) => (
                 <tr key={p.id}>
-                  <td>{new Date(p.fecha).toLocaleDateString('es-MX')}</td>
+                  <td>{formatoFecha(p.fecha)}</td>
                   <td>{formatoMXN(p.monto)}</td>
                   <td>{p.observaciones || '—'}</td>
                   <td className="text-right">
@@ -159,7 +155,7 @@ export default function Movimientos() {
             <tbody>
               {prestamos.map((p) => (
                 <tr key={p.id}>
-                  <td>{new Date(p.fecha).toLocaleDateString('es-MX')}</td>
+                  <td>{formatoFecha(p.fecha)}</td>
                   <td>{p.concepto}</td>
                   <td>{formatoMXN(p.monto)}</td>
                   <td>{p.observaciones || '—'}</td>
@@ -184,8 +180,7 @@ export default function Movimientos() {
           </table>
           {!!prestamos.length && (
             <p className="text-xs text-gray-400 mt-3">
-              De este total, <strong className="text-emerald-600">{formatoMXN(totalAdelantos)}</strong> son adelantos (suman al total aportado) y{' '}
-              <strong className="text-red-600">{formatoMXN(totalPrestamosDeuda)}</strong> son préstamos con concepto "Prestamo" (se descuentan del total aportado en el dashboard).
+              Este total se descuenta del "Total aportado" en el dashboard.
             </p>
           )}
         </div>

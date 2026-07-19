@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Layout from '../components/Layout.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
-import { formatoMXN } from '../components/StatCard.jsx';
+import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
 
@@ -91,7 +91,7 @@ export default function Servicios() {
             <tbody>
               {servicios.map((s) => (
                 <tr key={s.id}>
-                  <td>{new Date(s.fecha).toLocaleDateString('es-MX')}</td>
+                  <td>{formatoFecha(s.fecha)}</td>
                   <td>{Number(s.kilometraje).toLocaleString('es-MX')} km</td>
                   <td>{formatoMXN(s.precio)}</td>
                   <td>{Number(s.duracion_km).toLocaleString('es-MX')} km</td>

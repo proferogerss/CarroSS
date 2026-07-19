@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import Layout from '../components/Layout.jsx';
-import StatCard, { formatoMXN } from '../components/StatCard.jsx';
+import StatCard, { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
 
@@ -52,7 +52,7 @@ export default function Dashboard() {
           valor={r.proximoPago ? formatoMXN(r.proximoPago.pagoTotal) : '—'}
           subtexto={
             r.proximoPago
-              ? `Pago ${r.proximoPago.mes} de ${r.plazoReal} · ${new Date(`${r.proximoPago.fechaProgramada}T00:00:00`).toLocaleDateString('es-MX')}`
+              ? `Pago ${r.proximoPago.mes} de ${r.plazoReal} · ${formatoFecha(r.proximoPago.fechaProgramada)}`
               : 'Crédito liquidado'
           }
           tono="warn"
@@ -89,12 +89,10 @@ export default function Dashboard() {
           <dl className="grid grid-cols-2 gap-y-3 text-sm">
             <dt className="text-gray-500">Pagos iniciales (enganche, licencia, etc.)</dt>
             <dd className="text-right font-medium">{formatoMXN(finanzas.totalPagosIniciales)}</dd>
-            <dt className="text-gray-500">Adelantos (Licencia, Tarjetón, etc.)</dt>
-            <dd className="text-right font-medium text-emerald-600">+ {formatoMXN(finanzas.totalAdelantos)}</dd>
-            <dt className="text-gray-500">Préstamos (se descuentan)</dt>
-            <dd className="text-right font-medium text-red-600">− {formatoMXN(finanzas.totalPrestamos)}</dd>
             <dt className="text-gray-500">Mensualidades pagadas</dt>
             <dd className="text-right font-medium">{formatoMXN(finanzas.totalMensualidadesPagadas)}</dd>
+            <dt className="text-gray-500">Préstamos (se descuentan)</dt>
+            <dd className="text-right font-medium text-red-600">− {formatoMXN(finanzas.totalPrestamos)}</dd>
             <dt className="text-gray-500 font-semibold">Total aportado</dt>
             <dd className="text-right font-bold">{formatoMXN(finanzas.totalGeneralAportado)}</dd>
           </dl>
@@ -102,7 +100,7 @@ export default function Dashboard() {
           {servicios.ultimoServicio && (
             <div className="mt-5 pt-4 border-t border-gray-100 text-sm">
               <p className="text-gray-500">
-                Último servicio: <strong>{servicios.ultimoServicio.kilometraje.toLocaleString('es-MX')} km</strong> el {new Date(servicios.ultimoServicio.fecha).toLocaleDateString('es-MX')}.
+                Último servicio: <strong>{servicios.ultimoServicio.kilometraje.toLocaleString('es-MX')} km</strong> el {formatoFecha(servicios.ultimoServicio.fecha)}.
                 {' '}Siguiente sugerido a los <strong>{servicios.ultimoServicio.siguiente_km.toLocaleString('es-MX')} km</strong>.
               </p>
             </div>

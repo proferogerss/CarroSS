@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
-import { formatoMXN } from '../components/StatCard.jsx';
+import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 
 export default function VistaSemanal({ creditoId, onCambio }) {
@@ -149,7 +149,7 @@ export default function VistaSemanal({ creditoId, onCambio }) {
                 {filas.map((fila) => (
                   <tr key={fila.id} className={fila.pagado ? 'bg-emerald-50/50' : ''}>
                     <td>{fila.numero_semana}</td>
-                    <td>{new Date(`${fila.fecha_programada}T00:00:00`).toLocaleDateString('es-MX')}</td>
+                    <td>{formatoFecha(fila.fecha_programada)}</td>
                     <td>
                       <input
                         className="input py-1"
