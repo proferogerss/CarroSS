@@ -7,8 +7,8 @@ const router = express.Router();
 router.use(requireAuth);
 
 const resolver = resolverCreditoDesdeTabla('eventos_credito');
-const escritura = permisoCredito('escritura');
+const editar = permisoCredito('editar', 'amortizacion');
 
-router.delete('/:id', resolver, escritura, eventoController.eliminar);
+router.delete('/:id', resolver, editar, eventoController.eliminar);
 
 module.exports = router;

@@ -5,12 +5,16 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
+import { usePermisos } from '../context/PermisosContext.jsx';
 
 const PAGO_VACIO = { fecha: '', monto: '', observaciones: '' };
 const PRESTAMO_VACIO = { fecha: '', concepto: '', monto: '', observaciones: '' };
 
 export default function Movimientos() {
   const { creditoId } = useCredito();
+  const { puedeCrear: tienePermisoCrear, puedeEditar: tienePermisoEditar } = usePermisos();
+  const puedeCrear = tienePermisoCrear('movimientos');
+  const puedeEditar = tienePermisoEditar('movimientos');
   const [tab, setTab] = useState('pagos');
 
   const [pagos, setPagos] = useState([]);
@@ -84,7 +88,7 @@ export default function Movimientos() {
   return (
     <Layout
       titulo="Pagos y préstamos"
-      acciones={<button className="btn-primary" onClick={abrirModal}>+ Agregar</button>}
+      acciones={puedeCrear ? <button className="btn-primary" onClick={abrirModal}>+ Agregar</button> : null}
     >
       <div className="flex gap-2 mb-5">
         <button
@@ -111,7 +115,7 @@ export default function Movimientos() {
                 <th>Fecha</th>
                 <th>Monto</th>
                 <th>Observaciones</th>
-                <th></th>
+                {puedeEditar && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -120,9 +124,11 @@ export default function Movimientos() {
                   <td>{formatoFecha(p.fecha)}</td>
                   <td>{formatoMXN(p.monto)}</td>
                   <td>{p.observaciones || '—'}</td>
-                  <td className="text-right">
-                    <button className="btn-danger text-xs" onClick={() => setAEliminar({ tipo: 'pagos', id: p.id })}>Eliminar</button>
-                  </td>
+                  {puedeEditar && (
+                    <td className="text-right">
+                      <button className="btn-danger text-xs" onClick={() => setAEliminar({ tipo: 'pagos', id: p.id })}>Eliminar</button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {!pagos.length && (
@@ -134,7 +140,7 @@ export default function Movimientos() {
                 <tr>
                   <td className="font-semibold">Total</td>
                   <td className="font-semibold">{formatoMXN(totalPagos)}</td>
-                  <td /><td />
+                  <td />{puedeEditar && <td />}
                 </tr>
               </tfoot>
             )}
@@ -149,7 +155,7 @@ export default function Movimientos() {
                 <th>Concepto</th>
                 <th>Monto</th>
                 <th>Observaciones</th>
-                <th></th>
+                {puedeEditar && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -159,9 +165,11 @@ export default function Movimientos() {
                   <td>{p.concepto}</td>
                   <td>{formatoMXN(p.monto)}</td>
                   <td>{p.observaciones || '—'}</td>
-                  <td className="text-right">
-                    <button className="btn-danger text-xs" onClick={() => setAEliminar({ tipo: 'prestamos', id: p.id })}>Eliminar</button>
-                  </td>
+                  {puedeEditar && (
+                    <td className="text-right">
+                      <button className="btn-danger text-xs" onClick={() => setAEliminar({ tipo: 'prestamos', id: p.id })}>Eliminar</button>
+                    </td>
+                  )}
                 </tr>
               ))}
               {!prestamos.length && (
@@ -173,7 +181,7 @@ export default function Movimientos() {
                 <tr>
                   <td className="font-semibold">Total</td>
                   <td /><td className="font-semibold">{formatoMXN(totalPrestamos)}</td>
-                  <td /><td />
+                  <td />{puedeEditar && <td />}
                 </tr>
               </tfoot>
             )}

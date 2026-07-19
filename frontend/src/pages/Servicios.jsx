@@ -5,14 +5,15 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { usePermisos } from '../context/PermisosContext.jsx';
 
 const VACIO = { fecha: '', kilometraje: '', precio: '', duracion_km: '5000', siguiente_km: '' };
 
 export default function Servicios() {
   const { creditoId } = useCredito();
-  const { usuario } = useAuth();
-  const puedeEditar = usuario?.rol !== 'comprador';
+  const { puedeCrear: tienePermisoCrear, puedeEditar: tienePermisoEditar } = usePermisos();
+  const puedeCrear = tienePermisoCrear('servicios');
+  const puedeEditar = tienePermisoEditar('servicios');
   const [servicios, setServicios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -75,7 +76,7 @@ export default function Servicios() {
   const totalGastado = servicios.reduce((s, x) => s + Number(x.precio), 0);
 
   return (
-    <Layout titulo="Servicios y mantenimiento" acciones={puedeEditar ? <button className="btn-primary" onClick={abrirModal}>+ Registrar servicio</button> : null}>
+    <Layout titulo="Servicios y mantenimiento" acciones={puedeCrear ? <button className="btn-primary" onClick={abrirModal}>+ Registrar servicio</button> : null}>
       {cargando ? (
         <p className="text-gray-400">Cargando...</p>
       ) : (

@@ -5,15 +5,15 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import { usePermisos } from '../context/PermisosContext.jsx';
 import VistaSemanal from './VistaSemanal.jsx';
 
 const EVENTO_VACIO = { tipo: 'pago_extra', mes: '', monto: '', observaciones: '' };
 
 export default function Amortizacion() {
   const { creditoId } = useCredito();
-  const { usuario } = useAuth();
-  const puedeEditar = usuario?.rol !== 'comprador';
+  const { puedeEditar: tienePermisoEditar, puedeCrear: tienePermisoCrear } = usePermisos();
+  const puedeEditar = tienePermisoEditar('amortizacion');
   const [vista, setVista] = useState('mensual');
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -122,7 +122,7 @@ export default function Amortizacion() {
       acciones={
         <>
           <button className="btn-secondary" onClick={() => setModalSimulador(true)}>Simular escenario</button>
-          {puedeEditar && <button className="btn-secondary" onClick={() => setModalEvento(true)}>+ Pago extra / Seguro</button>}
+          {tienePermisoCrear('amortizacion') && <button className="btn-secondary" onClick={() => setModalEvento(true)}>+ Pago extra / Seguro</button>}
           <button className="btn-primary" onClick={exportarExcel}>Exportar Excel</button>
         </>
       }
@@ -235,7 +235,7 @@ export default function Amortizacion() {
           </div>
         </>
       ) : (
-        <VistaSemanal creditoId={creditoId} onCambio={cargar} puedeEditar={puedeEditar} />
+        <VistaSemanal creditoId={creditoId} onCambio={cargar} puedeEditar={puedeEditar} puedeCrear={tienePermisoCrear('amortizacion')} />
       )}
 
       {/* Modal: registrar evento real */}

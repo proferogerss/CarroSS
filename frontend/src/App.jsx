@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useCredito } from './context/CreditoContext.jsx';
+import { usePermisos } from './context/PermisosContext.jsx';
 
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -10,6 +11,7 @@ import Amortizacion from './pages/Amortizacion.jsx';
 import Servicios from './pages/Servicios.jsx';
 import Credito from './pages/Credito.jsx';
 import Usuarios from './pages/Usuarios.jsx';
+import RolesPermisos from './pages/RolesPermisos.jsx';
 
 function RutaProtegida({ children }) {
   const { usuario } = useAuth();
@@ -17,9 +19,16 @@ function RutaProtegida({ children }) {
   return children;
 }
 
-function RequiereRol({ roles, children }) {
+function RequiereAdmin({ children }) {
   const { usuario } = useAuth();
-  if (!roles.includes(usuario?.rol)) return <Navigate to="/" replace />;
+  if (usuario?.rol !== 'admin') return <Navigate to="/" replace />;
+  return children;
+}
+
+function RequierePantalla({ pantalla, children }) {
+  const { puedeVer, cargando } = usePermisos();
+  if (cargando) return <div className="min-h-screen flex items-center justify-center text-gray-400">Cargando...</div>;
+  if (!puedeVer(pantalla)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -54,13 +63,16 @@ export default function App() {
       <Route path="/login" element={<Login />} />
 
       <Route path="/credito" element={
-        <RutaProtegida><RequiereRol roles={['admin', 'vendedor']}><Credito /></RequiereRol></RutaProtegida>
+        <RutaProtegida><RequierePantalla pantalla="credito"><Credito /></RequierePantalla></RutaProtegida>
       } />
       <Route path="/usuarios" element={
-        <RutaProtegida><RequiereRol roles={['admin']}><Usuarios /></RequiereRol></RutaProtegida>
+        <RutaProtegida><RequiereAdmin><Usuarios /></RequiereAdmin></RutaProtegida>
+      } />
+      <Route path="/roles-permisos" element={
+        <RutaProtegida><RequiereAdmin><RolesPermisos /></RequiereAdmin></RutaProtegida>
       } />
       <Route path="/movimientos" element={
-        <RutaProtegida><RequiereRol roles={['admin', 'vendedor']}><RequiereCredito><Movimientos /></RequiereCredito></RequiereRol></RutaProtegida>
+        <RutaProtegida><RequierePantalla pantalla="movimientos"><RequiereCredito><Movimientos /></RequiereCredito></RequierePantalla></RutaProtegida>
       } />
 
       <Route path="/" element={<RutaProtegida><RequiereCredito><Dashboard /></RequiereCredito></RutaProtegida>} />

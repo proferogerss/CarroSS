@@ -7,9 +7,9 @@ const router = express.Router();
 router.use(requireAuth);
 
 const resolver = resolverCreditoDesdeTabla('prestamos');
-const escritura = permisoCredito('escritura');
+const editar = permisoCredito('editar', 'movimientos');
 
-router.put('/:id', resolver, escritura, prestamoController.actualizar);
-router.delete('/:id', resolver, escritura, prestamoController.eliminar);
+router.put('/:id', resolver, editar, prestamoController.actualizar);
+router.delete('/:id', resolver, editar, prestamoController.eliminar);
 
 module.exports = router;

@@ -2,8 +2,7 @@ const pool = require('../config/db');
 
 /**
  * Toma el id del crédito desde un param de la URL (ej. :creditoId o :id en
- * rutas anidadas bajo /creditos) y lo deja en req.creditoId para que
- * permisoCredito() lo use.
+ * rutas anidadas bajo /creditos) y lo deja en req.creditoId.
  */
 function resolverCreditoId(paramName = 'creditoId') {
   return (req, res, next) => {
@@ -30,15 +29,59 @@ function resolverCreditoDesdeTabla(tabla, paramName = 'id') {
   };
 }
 
+async function obtenerPermiso(rolClave, pantallaClave) {
+  const { rows } = await pool.query(
+    'SELECT puede_ver, puede_crear, puede_editar FROM permisos_rol WHERE rol_clave = $1 AND pantalla_clave = $2',
+    [rolClave, pantallaClave]
+  );
+  return rows[0] || { puede_ver: false, puede_crear: false, puede_editar: false };
+}
+
 /**
- * Verifica que req.usuario tenga acceso al crédito en req.creditoId, según su rol:
- * - admin: acceso total, siempre pasa.
- * - vendedor: solo si el crédito le pertenece (vendedor_id). Lectura y escritura.
- * - comprador: solo si el crédito es el suyo (comprador_id). Solo lectura.
+ * Verifica el permiso de PANTALLA (matriz configurable en /roles-permisos),
+ * sin verificar dueño de ningún crédito en particular. Se usa para acciones
+ * que no cuelgan de un crédito ya existente (ej. crear un crédito nuevo).
+ * nivel: 'lectura' | 'crear' | 'editar'
  */
-function permisoCredito(nivel) {
+function permisoPantalla(nivel, pantalla) {
+  return async (req, res, next) => {
+    if (req.usuario.rol === 'admin') return next();
+
+    const permiso = await obtenerPermiso(req.usuario.rol, pantalla);
+    if (!permiso.puede_ver) return res.status(403).json({ error: 'No tienes acceso a esta pantalla.' });
+    if (nivel === 'crear' && !permiso.puede_crear) {
+      return res.status(403).json({ error: 'Tu rol no tiene permiso para crear aquí.' });
+    }
+    if (nivel === 'editar' && !permiso.puede_editar) {
+      return res.status(403).json({ error: 'Tu rol no tiene permiso para editar aquí.' });
+    }
+    next();
+  };
+}
+
+/**
+ * Verifica permiso de pantalla (matriz configurable) Y dueño del crédito en
+ * req.creditoId, según el rol:
+ * - admin: acceso total, siempre pasa.
+ * - vendedor: necesita permiso de pantalla Y que el crédito sea suyo (vendedor_id).
+ * - comprador: necesita permiso de pantalla Y que el crédito sea suyo (comprador_id).
+ * nivel: 'lectura' | 'crear' | 'editar'
+ */
+function permisoCredito(nivel, pantalla) {
   return async (req, res, next) => {
     const usuario = req.usuario;
+
+    if (usuario.rol !== 'admin' && pantalla) {
+      const permiso = await obtenerPermiso(usuario.rol, pantalla);
+      if (!permiso.puede_ver) return res.status(403).json({ error: 'No tienes acceso a esta pantalla.' });
+      if (nivel === 'crear' && !permiso.puede_crear) {
+        return res.status(403).json({ error: 'Tu rol no tiene permiso para crear aquí.' });
+      }
+      if (nivel === 'editar' && !permiso.puede_editar) {
+        return res.status(403).json({ error: 'Tu rol no tiene permiso para editar aquí.' });
+      }
+    }
+
     if (usuario.rol === 'admin') return next();
 
     const { rows } = await pool.query(
@@ -58,9 +101,6 @@ function permisoCredito(nivel) {
     if (usuario.rol === 'comprador') {
       if (String(credito.comprador_id) !== String(usuario.id)) {
         return res.status(403).json({ error: 'No tienes acceso a este crédito.' });
-      }
-      if (nivel === 'escritura') {
-        return res.status(403).json({ error: 'Tu cuenta solo tiene permiso de lectura.' });
       }
       return next();
     }
@@ -86,6 +126,8 @@ function soloAdminOVendedor(req, res, next) {
 module.exports = {
   resolverCreditoId,
   resolverCreditoDesdeTabla,
+  obtenerPermiso,
+  permisoPantalla,
   permisoCredito,
   soloAdmin,
   soloAdminOVendedor,

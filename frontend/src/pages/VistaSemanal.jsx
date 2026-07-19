@@ -3,7 +3,7 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN, formatoFecha } from '../components/StatCard.jsx';
 import api from '../api/client';
 
-export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true }) {
+export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true, puedeCrear = true }) {
   const [semanas, setSemanas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [fechaInicio, setFechaInicio] = useState('');
@@ -85,7 +85,7 @@ export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true }
   if (cargando) return <p className="text-gray-400">Cargando...</p>;
 
   if (!semanas.length) {
-    if (!puedeEditar) {
+    if (!puedeCrear) {
       return <p className="text-gray-400">Aún no hay un calendario semanal configurado para este crédito.</p>;
     }
     return (

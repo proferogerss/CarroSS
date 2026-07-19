@@ -7,8 +7,8 @@ const router = express.Router();
 router.use(requireAuth);
 
 const resolver = resolverCreditoDesdeTabla('pagos_semanales');
-const escritura = permisoCredito('escritura');
+const editar = permisoCredito('editar', 'amortizacion');
 
-router.put('/:id', resolver, escritura, semanaController.actualizar);
+router.put('/:id', resolver, editar, semanaController.actualizar);
 
 module.exports = router;

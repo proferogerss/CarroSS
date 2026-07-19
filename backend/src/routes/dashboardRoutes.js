@@ -6,6 +6,6 @@ const dashboardController = require('../controllers/dashboardController');
 const router = express.Router();
 router.use(requireAuth);
 
-router.get('/:creditoId', resolverCreditoId('creditoId'), permisoCredito('lectura'), dashboardController.resumen);
+router.get('/:creditoId', resolverCreditoId('creditoId'), permisoCredito('lectura', 'dashboard'), dashboardController.resumen);
 
 module.exports = router;

@@ -12,6 +12,8 @@ const servicioRoutes = require('./routes/servicioRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
 const semanaRoutes = require('./routes/semanaRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
+const permisoRoutes = require('./routes/permisoRoutes');
+const adminPermisosRoutes = require('./routes/adminPermisosRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
@@ -30,6 +32,8 @@ app.use('/api/servicios', servicioRoutes);
 app.use('/api/eventos', eventoRoutes);
 app.use('/api/semanas', semanaRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/permisos', permisoRoutes);
+app.use('/api/admin', adminPermisosRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.use(notFound);
