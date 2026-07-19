@@ -221,3 +221,19 @@ datos — nunca se guardan montos fijos, todo se recalcula.
 El Excel `CarroSS.xlsx` que compartiste (Renault Kwid 2023, financiado 134,116 a 30% anual
 en 72 meses) puedes darlo de alta directamente desde la pantalla "Datos del crédito" al
 entrar por primera vez a la aplicación.
+
+## 5. Migraciones aplicadas después de la versión inicial
+
+- `002_dia_pago.sql` — agrega el día de pago mensual (1 o 15) al crédito; se usa para
+  calcular la fecha programada de cada pago (empieza el mes siguiente a la fecha de compra).
+- `003_pagos_semanales.sql` — agrega la tabla `pagos_semanales` (calendario semanal editable,
+  con monto programado y monto realmente pagado) y la columna `origen` en `eventos_credito`
+  para distinguir eventos manuales de los generados automáticamente por el botón
+  "Recalcular" de la vista semanal (cualquier excedente pagado en la semana sobre la
+  mensualidad base se registra como pago extra a capital).
+
+Corre las migraciones nuevas en el servidor con:
+```bash
+psql -h 127.0.0.1 -U appuser -d carro_ss -f backend/src/migrations/002_dia_pago.sql
+psql -h 127.0.0.1 -U appuser -d carro_ss -f backend/src/migrations/003_pagos_semanales.sql
+```

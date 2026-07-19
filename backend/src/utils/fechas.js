@@ -22,4 +22,20 @@ function calcularFechaPago(fechaCompra, diaPago, numeroPago) {
   return fecha.toISOString().slice(0, 10);
 }
 
-module.exports = { calcularFechaPago };
+/**
+ * Genera `cantidad` fechas consecutivas separadas por 7 días, empezando en `fechaInicio`.
+ * @param {Date|string} fechaInicio
+ * @param {number} cantidad
+ * @returns {string[]} fechas en formato YYYY-MM-DD
+ */
+function generarFechasSemanales(fechaInicio, cantidad) {
+  const base = typeof fechaInicio === 'string' ? new Date(`${fechaInicio}T00:00:00Z`) : fechaInicio;
+  const fechas = [];
+  for (let i = 0; i < cantidad; i++) {
+    const f = new Date(base.getTime() + i * 7 * 24 * 60 * 60 * 1000);
+    fechas.push(f.toISOString().slice(0, 10));
+  }
+  return fechas;
+}
+
+module.exports = { calcularFechaPago, generarFechasSemanales };

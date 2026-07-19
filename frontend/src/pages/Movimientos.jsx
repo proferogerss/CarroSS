@@ -80,6 +80,10 @@ export default function Movimientos() {
 
   const totalPagos = pagos.reduce((s, p) => s + Number(p.monto), 0);
   const totalPrestamos = prestamos.reduce((s, p) => s + Number(p.monto), 0);
+  const totalPrestamosDeuda = prestamos
+    .filter((p) => /^prestamo/i.test((p.concepto || '').trim()))
+    .reduce((s, p) => s + Number(p.monto), 0);
+  const totalAdelantos = totalPrestamos - totalPrestamosDeuda;
 
   return (
     <Layout
@@ -178,6 +182,12 @@ export default function Movimientos() {
               </tfoot>
             )}
           </table>
+          {!!prestamos.length && (
+            <p className="text-xs text-gray-400 mt-3">
+              De este total, <strong className="text-emerald-600">{formatoMXN(totalAdelantos)}</strong> son adelantos (suman al total aportado) y{' '}
+              <strong className="text-red-600">{formatoMXN(totalPrestamosDeuda)}</strong> son préstamos con concepto "Prestamo" (se descuentan del total aportado en el dashboard).
+            </p>
+          )}
         </div>
       )}
 

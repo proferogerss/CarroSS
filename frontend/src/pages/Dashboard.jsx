@@ -64,7 +64,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <StatCard etiqueta="Total intereses proyectados" valor={formatoMXN(r.totalIntereses)} tono="bad" />
         <StatCard etiqueta="Total a pagar (crédito)" valor={formatoMXN(r.totalAPagar)} />
-        <StatCard etiqueta="Pagos + préstamos + mensualidades" valor={formatoMXN(finanzas.totalGeneralAportado)} tono="good" />
+        <StatCard etiqueta="Total aportado" valor={formatoMXN(finanzas.totalGeneralAportado)} tono="good" />
         <StatCard etiqueta="Gastado en servicios" valor={formatoMXN(servicios.totalGastadoServicios)} subtexto={`${servicios.totalServicios} servicios registrados`} />
       </div>
 
@@ -89,8 +89,10 @@ export default function Dashboard() {
           <dl className="grid grid-cols-2 gap-y-3 text-sm">
             <dt className="text-gray-500">Pagos iniciales (enganche, licencia, etc.)</dt>
             <dd className="text-right font-medium">{formatoMXN(finanzas.totalPagosIniciales)}</dd>
-            <dt className="text-gray-500">Préstamos / adelantos</dt>
-            <dd className="text-right font-medium">{formatoMXN(finanzas.totalPrestamos)}</dd>
+            <dt className="text-gray-500">Adelantos (Licencia, Tarjetón, etc.)</dt>
+            <dd className="text-right font-medium text-emerald-600">+ {formatoMXN(finanzas.totalAdelantos)}</dd>
+            <dt className="text-gray-500">Préstamos (se descuentan)</dt>
+            <dd className="text-right font-medium text-red-600">− {formatoMXN(finanzas.totalPrestamos)}</dd>
             <dt className="text-gray-500">Mensualidades pagadas</dt>
             <dd className="text-right font-medium">{formatoMXN(finanzas.totalMensualidadesPagadas)}</dd>
             <dt className="text-gray-500 font-semibold">Total aportado</dt>

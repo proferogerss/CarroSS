@@ -46,7 +46,23 @@ async function resumen(req, res) {
     : null;
 
   const totalPagosIniciales = round2(pagos.reduce((sum, p) => sum + Number(p.monto), 0));
-  const totalPrestamos = round2(prestamos.reduce((sum, p) => sum + Number(p.monto), 0));
+
+  // Dentro de "prestamos": lo que tiene concepto "Prestamo" es dinero adelantado al
+  // comprador (se resta, es una deuda aparte) — lo demás (Licencia, Tarjetón, etc.)
+  // son adelantos/gastos que sí cuentan como aportación (se suman).
+  let totalPrestamosDeuda = 0;
+  let totalAdelantos = 0;
+  for (const p of prestamos) {
+    const monto = Number(p.monto);
+    if (/^prestamo/i.test((p.concepto || '').trim())) {
+      totalPrestamosDeuda += monto;
+    } else {
+      totalAdelantos += monto;
+    }
+  }
+  totalPrestamosDeuda = round2(totalPrestamosDeuda);
+  totalAdelantos = round2(totalAdelantos);
+
   const totalMensualidadesPagadas = round2(
     mensualidadesPagadas.reduce((sum, m) => sum + Number(m.monto_pagado || 0), 0)
   );
@@ -68,9 +84,10 @@ async function resumen(req, res) {
     },
     finanzas: {
       totalPagosIniciales,
-      totalPrestamos,
+      totalAdelantos,
+      totalPrestamos: totalPrestamosDeuda,
       totalMensualidadesPagadas,
-      totalGeneralAportado: round2(totalPagosIniciales + totalPrestamos + totalMensualidadesPagadas),
+      totalGeneralAportado: round2(totalPagosIniciales + totalAdelantos - totalPrestamosDeuda + totalMensualidadesPagadas),
     },
     servicios: {
       ultimoServicio,

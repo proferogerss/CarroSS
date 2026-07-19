@@ -19,6 +19,9 @@ export function CreditoProvider({ children }) {
         if (siguiente) localStorage.setItem('carross_credito_id', siguiente);
         return siguiente;
       });
+    } catch (err) {
+      console.error('No se pudo cargar la lista de créditos:', err);
+      // No borramos creditoId: puede seguir siendo válido aunque esta llamada haya fallado.
     } finally {
       setCargando(false);
     }

@@ -5,11 +5,13 @@ import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import { formatoMXN } from '../components/StatCard.jsx';
 import api from '../api/client';
 import { useCredito } from '../context/CreditoContext.jsx';
+import VistaSemanal from './VistaSemanal.jsx';
 
 const EVENTO_VACIO = { tipo: 'pago_extra', mes: '', monto: '', observaciones: '' };
 
 export default function Amortizacion() {
   const { creditoId } = useCredito();
+  const [vista, setVista] = useState('mensual');
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -144,66 +146,92 @@ export default function Amortizacion() {
         </div>
       </div>
 
-      {!!datos.eventos.length && (
-        <div className="card mb-6">
-          <p className="text-sm font-semibold text-gray-600 mb-3">Eventos aplicados al crédito</p>
-          <table className="data-table w-full">
-            <thead>
-              <tr><th>Tipo</th><th>Mes</th><th>Monto</th><th>Observaciones</th><th></th></tr>
-            </thead>
-            <tbody>
-              {datos.eventos.map((ev) => (
-                <tr key={ev.id}>
-                  <td>{ev.tipo === 'pago_extra' ? 'Pago extra a capital' : 'Seguro financiado'}</td>
-                  <td>{ev.mes}</td>
-                  <td>{formatoMXN(ev.monto)}</td>
-                  <td>{ev.observaciones || '—'}</td>
-                  <td className="text-right"><button className="btn-danger text-xs" onClick={() => setAEliminar(ev.id)}>Eliminar</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <div className="card overflow-x-auto max-h-[70vh] overflow-y-auto">
-        <table className="data-table w-full">
-          <thead>
-            <tr>
-              <th>Número de pago</th>
-              <th>Fecha de pago</th>
-              <th>Saldo inicial</th>
-              <th>Seguro</th>
-              <th>Interés</th>
-              <th>IVA</th>
-              <th>Capital</th>
-              <th>Abono extra</th>
-              <th>Pago total</th>
-              <th>Saldo final</th>
-              <th>Pagado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {datos.tabla.map((fila) => (
-              <tr key={fila.mes} className={fila.pagado ? 'bg-emerald-50/50' : ''}>
-                <td>{fila.mes}</td>
-                <td>{new Date(`${fila.fechaProgramada}T00:00:00`).toLocaleDateString('es-MX')}</td>
-                <td>{formatoMXN(fila.saldoInicial)}</td>
-                <td>{fila.cargoSeguro ? formatoMXN(fila.cargoSeguro) : '—'}</td>
-                <td>{formatoMXN(fila.interes)}</td>
-                <td>{fila.ivaInteres ? formatoMXN(fila.ivaInteres) : '—'}</td>
-                <td>{formatoMXN(fila.capital)}</td>
-                <td>{fila.abonoExtra ? formatoMXN(fila.abonoExtra) : '—'}</td>
-                <td className="font-medium">{formatoMXN(fila.pagoTotal)}</td>
-                <td>{formatoMXN(fila.saldoFinal)}</td>
-                <td>
-                  <input type="checkbox" checked={fila.pagado} onChange={() => togglePagado(fila)} className="w-4 h-4 accent-brand-600" />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setVista('mensual')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${vista === 'mensual' ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+        >
+          Vista mensual
+        </button>
+        <button
+          onClick={() => setVista('semanal')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${vista === 'semanal' ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+        >
+          Vista semanal
+        </button>
       </div>
+
+      {vista === 'mensual' ? (
+        <>
+          {!!datos.eventos.length && (
+            <div className="card mb-6">
+              <p className="text-sm font-semibold text-gray-600 mb-3">Eventos aplicados al crédito</p>
+              <table className="data-table w-full">
+                <thead>
+                  <tr><th>Tipo</th><th>Mes</th><th>Monto</th><th>Observaciones</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {datos.eventos.map((ev) => (
+                    <tr key={ev.id}>
+                      <td>
+                        {ev.tipo === 'pago_extra' ? 'Pago extra a capital' : 'Seguro financiado'}
+                        {ev.origen === 'recalculo_semanal' && (
+                          <span className="ml-2 text-xs bg-brand-50 text-brand-600 px-2 py-0.5 rounded-full">auto (semanal)</span>
+                        )}
+                      </td>
+                      <td>{ev.mes}</td>
+                      <td>{formatoMXN(ev.monto)}</td>
+                      <td>{ev.observaciones || '—'}</td>
+                      <td className="text-right"><button className="btn-danger text-xs" onClick={() => setAEliminar(ev.id)}>Eliminar</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="card overflow-x-auto max-h-[70vh] overflow-y-auto">
+            <table className="data-table w-full">
+              <thead>
+                <tr>
+                  <th>Número de pago</th>
+                  <th>Fecha de pago</th>
+                  <th>Saldo inicial</th>
+                  <th>Seguro</th>
+                  <th>Interés</th>
+                  <th>IVA</th>
+                  <th>Capital</th>
+                  <th>Abono extra</th>
+                  <th>Pago total</th>
+                  <th>Saldo final</th>
+                  <th>Pagado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {datos.tabla.map((fila) => (
+                  <tr key={fila.mes} className={fila.pagado ? 'bg-emerald-50/50' : ''}>
+                    <td>{fila.mes}</td>
+                    <td>{new Date(`${fila.fechaProgramada}T00:00:00`).toLocaleDateString('es-MX')}</td>
+                    <td>{formatoMXN(fila.saldoInicial)}</td>
+                    <td>{fila.cargoSeguro ? formatoMXN(fila.cargoSeguro) : '—'}</td>
+                    <td>{formatoMXN(fila.interes)}</td>
+                    <td>{fila.ivaInteres ? formatoMXN(fila.ivaInteres) : '—'}</td>
+                    <td>{formatoMXN(fila.capital)}</td>
+                    <td>{fila.abonoExtra ? formatoMXN(fila.abonoExtra) : '—'}</td>
+                    <td className="font-medium">{formatoMXN(fila.pagoTotal)}</td>
+                    <td>{formatoMXN(fila.saldoFinal)}</td>
+                    <td>
+                      <input type="checkbox" checked={fila.pagado} onChange={() => togglePagado(fila)} className="w-4 h-4 accent-brand-600" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <VistaSemanal creditoId={creditoId} onCambio={cargar} />
+      )}
 
       {/* Modal: registrar evento real */}
       <Modal abierto={modalEvento} onClose={() => setModalEvento(false)} titulo="Registrar pago extra o seguro financiado">

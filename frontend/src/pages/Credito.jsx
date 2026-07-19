@@ -28,11 +28,14 @@ export default function Credito() {
   const [pagoBaseEstimado, setPagoBaseEstimado] = useState(null);
 
   useEffect(() => {
-    if (creditos.length && !editandoId) {
-      cargarParaEditar(creditoActual || creditos[0]);
+    if (editandoId) return;
+    if (creditoActual) {
+      cargarParaEditar(creditoActual);
+    } else if (creditoId) {
+      api.get(`/creditos/${creditoId}`).then(({ data }) => cargarParaEditar(data)).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [creditos]);
+  }, [creditoId, creditoActual]);
 
   useEffect(() => {
     const monto = Number(form.monto_financiar);

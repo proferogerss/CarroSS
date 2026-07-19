@@ -10,6 +10,7 @@ const pagoRoutes = require('./routes/pagoRoutes');
 const prestamoRoutes = require('./routes/prestamoRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
+const semanaRoutes = require('./routes/semanaRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
@@ -26,6 +27,7 @@ app.use('/api/pagos', pagoRoutes);
 app.use('/api/prestamos', prestamoRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api/eventos', eventoRoutes);
+app.use('/api/semanas', semanaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 app.use(notFound);
