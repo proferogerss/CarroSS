@@ -15,6 +15,7 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const permisoRoutes = require('./routes/permisoRoutes');
 const adminPermisosRoutes = require('./routes/adminPermisosRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const comprobanteRoutes = require('./routes/comprobanteRoutes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/permisos', permisoRoutes);
 app.use('/api/admin', adminPermisosRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/comprobantes', comprobanteRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

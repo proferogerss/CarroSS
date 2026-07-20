@@ -9,6 +9,8 @@ const servicioController = require('../controllers/servicioController');
 const eventoController = require('../controllers/eventoController');
 const amortizacionController = require('../controllers/amortizacionController');
 const semanaController = require('../controllers/semanaController');
+const comprobanteController = require('../controllers/comprobanteController');
+const { upload } = require('../middleware/uploadComprobante');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -51,5 +53,10 @@ router.get('/:creditoId/semanas', creditoIdParam, permisoCredito('lectura', 'amo
 router.post('/:creditoId/semanas/generar', creditoIdParam, permisoCredito('crear', 'amortizacion'), semanaController.generar);
 router.delete('/:creditoId/semanas', creditoIdParam, permisoCredito('editar', 'amortizacion'), semanaController.eliminarCalendario);
 router.post('/:creditoId/semanas/recalcular/:periodo', creditoIdParam, permisoCredito('editar', 'amortizacion'), semanaController.recalcular);
+router.post('/:creditoId/semanas/recalcular/:periodo', creditoIdParam, permisoCredito('editar', 'amortizacion'), semanaController.recalcular);
+
+// Comprobantes de pago — pantalla "comprobantes"
+router.get('/:creditoId/comprobantes', creditoIdParam, permisoCredito('lectura', 'comprobantes'), comprobanteController.listar);
+router.post('/:creditoId/comprobantes', creditoIdParam, permisoCredito('crear', 'comprobantes'), upload.single('imagen'), comprobanteController.subir);
 
 module.exports = router;
