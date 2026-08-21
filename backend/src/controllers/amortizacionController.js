@@ -58,6 +58,9 @@ async function simular(req, res) {
     if (!['pago_extra', 'seguro'].includes(ev.tipo) || !ev.mes || !ev.monto) {
       return res.status(400).json({ error: 'Cada evento simulado requiere tipo, mes y monto válidos.' });
     }
+    if (ev.tipo === 'pago_extra' && ev.modo && !['plazo', 'mensualidad'].includes(ev.modo)) {
+      return res.status(400).json({ error: `Modo inválido "${ev.modo}" en un evento pago_extra. Usa "plazo" o "mensualidad".` });
+    }
   }
 
   // La simulación parte de los eventos ya reales/registrados + los hipotéticos que se están probando
@@ -103,13 +106,18 @@ async function exportarExcel(req, res) {
   hoja.addRow(['Comprador', credito.comprador]);
   hoja.addRow(['Monto a financiar', Number(credito.monto_financiar)]);
   hoja.addRow(['Tasa anual', Number(credito.tasa_anual)]);
-  hoja.addRow(['Plazo (meses)', credito.plazo_meses]);
-  hoja.addRow(['Pago base mensual', resultado.pagoBase]);
+  hoja.addRow(['Plazo original (meses)', credito.plazo_meses]);
+  hoja.addRow(['Plazo real (meses)', resultado.plazoReal]);
+  hoja.addRow(['Pago base mensual (original)', resultado.pagoBase]);
+  if (resultado.pagoBaseFinal !== resultado.pagoBase) {
+    hoja.addRow(['Mensualidad vigente (tras abonos en modo "mensualidad")', resultado.pagoBaseFinal]);
+  }
   hoja.addRow([]);
 
   const encabezado = hoja.addRow([
     'Número de pago', 'Fecha de pago', 'Saldo inicial', 'Cargo seguro', 'Interés', 'IVA interés',
-    'Capital', 'Abono extra', 'Capital total', 'Pago total', 'Saldo final',
+    'Capital', 'Abono extra', 'Modo abono extra', 'Mensualidad vigente ese mes', 'Capital total',
+    'Pago total', 'Saldo final',
   ]);
   encabezado.font = { bold: true };
 
@@ -117,12 +125,16 @@ async function exportarExcel(req, res) {
     const fechaProgramada = calcularFechaPago(credito.fecha_compra, credito.dia_pago, fila.mes);
     hoja.addRow([
       fila.mes, fechaProgramada, fila.saldoInicial, fila.cargoSeguro, fila.interes, fila.ivaInteres,
-      fila.capital, fila.abonoExtra, fila.capitalTotal, fila.pagoTotal, fila.saldoFinal,
+      fila.capital, fila.abonoExtra, fila.modoAbonoExtra || '', fila.pagoBaseVigente, fila.capitalTotal,
+      fila.pagoTotal, fila.saldoFinal,
     ]);
   }
 
   hoja.addRow([]);
-  hoja.addRow(['Totales', '', '', '', resultado.totales.interes, resultado.totales.iva, resultado.totales.capital, resultado.totales.abonosExtra, '', resultado.totales.pagado, '']);
+  hoja.addRow([
+    'Totales', '', '', '', resultado.totales.interes, resultado.totales.iva, resultado.totales.capital,
+    resultado.totales.abonosExtra, '', '', '', resultado.totales.pagado, '',
+  ]);
 
   hoja.columns.forEach((col) => { col.width = 16; });
 

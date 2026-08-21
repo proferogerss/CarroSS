@@ -10,6 +10,11 @@ const ESTADO_BADGE = {
   rechazado: { texto: 'Rechazado', clase: 'bg-red-50 text-red-600' },
 };
 
+const MODOS_RECALCULO = [
+  { valor: 'plazo', etiqueta: 'Reducir plazo', ayuda: 'Mensualidad igual, el crédito termina antes.' },
+  { valor: 'mensualidad', etiqueta: 'Reducir mensualidad', ayuda: 'Plazo igual, baja el pago de los meses que faltan.' },
+];
+
 export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true, puedeCrear = true }) {
   const [semanas, setSemanas] = useState([]);
   const [comprobantesPorSemana, setComprobantesPorSemana] = useState({}); // { [pago_semanal_id]: comprobante }
@@ -20,6 +25,7 @@ export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true, 
   const [confirmarEliminar, setConfirmarEliminar] = useState(false);
   const [recalculando, setRecalculando] = useState(null); // periodo en curso
   const [resultadoRecalculo, setResultadoRecalculo] = useState({}); // { [periodo]: resultado }
+  const [modoRecalculo, setModoRecalculo] = useState('plazo'); // 'plazo' | 'mensualidad' — qué se aplica al recalcular
 
   // Revisión de comprobante (modal)
   const [comprobanteActivo, setComprobanteActivo] = useState(null);
@@ -96,7 +102,7 @@ export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true, 
   async function recalcularPeriodo(periodo) {
     setRecalculando(periodo);
     try {
-      const { data } = await api.post(`/creditos/${creditoId}/semanas/recalcular/${periodo}`);
+      const { data } = await api.post(`/creditos/${creditoId}/semanas/recalcular/${periodo}`, { modo: modoRecalculo });
       setResultadoRecalculo((prev) => ({ ...prev, [periodo]: data }));
       await cargar();
       onCambio?.(); // avisa al padre para refrescar la tabla mensual (los eventos cambiaron)
@@ -203,6 +209,30 @@ export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true, 
         </div>
       )}
 
+      {puedeEditar && (
+        <div className="card flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Al recalcular un excedente, aplicarlo como:</p>
+            <p className="text-xs text-gray-400">
+              Siempre se calculan las dos opciones; esta es la que queda registrada en la amortización real.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {MODOS_RECALCULO.map((m) => (
+              <button
+                key={m.valor}
+                type="button"
+                title={m.ayuda}
+                className={`btn-secondary text-xs ${modoRecalculo === m.valor ? 'ring-2 ring-brand-500 bg-brand-50' : ''}`}
+                onClick={() => setModoRecalculo(m.valor)}
+              >
+                {m.etiqueta}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {periodos.map((periodo) => {
         const filas = semanas.filter((s) => s.periodo === periodo);
         const sumaProgramada = filas.reduce((s, f) => s + Number(f.monto_programado), 0);
@@ -295,14 +325,35 @@ export default function VistaSemanal({ creditoId, onCambio, puedeEditar = true, 
             </table>
 
             {resultado && (
-              <div className="text-xs bg-brand-50 text-brand-700 rounded-lg px-3 py-2">
-                Mensualidad base: {formatoMXN(resultado.pagoBase)} · Pagado en el mes: {formatoMXN(resultado.sumaPagada)} ·{' '}
-                {resultado.diferencia > 0 ? (
-                  <>Excedente aplicado como pago extra a capital: <strong>{formatoMXN(resultado.diferencia)}</strong></>
-                ) : resultado.diferencia < 0 ? (
-                  <span className="text-amber-600">{resultado.advertencia}</span>
-                ) : (
-                  <>Se pagó exactamente lo esperado, sin excedente.</>
+              <div className="text-xs bg-brand-50 text-brand-700 rounded-lg px-3 py-2 space-y-2">
+                <p>
+                  Mensualidad base: {formatoMXN(resultado.pagoBase)} · Pagado en el mes: {formatoMXN(resultado.sumaPagada)} ·{' '}
+                  {resultado.diferencia > 0 ? (
+                    <>Excedente: <strong>{formatoMXN(resultado.diferencia)}</strong></>
+                  ) : resultado.diferencia < 0 ? (
+                    <span className="text-amber-600">{resultado.advertencia}</span>
+                  ) : (
+                    <>Se pagó exactamente lo esperado, sin excedente.</>
+                  )}
+                </p>
+
+                {resultado.comparativo && (
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    <div className={`rounded-lg px-2.5 py-2 ${resultado.modoAplicado === 'plazo' ? 'bg-brand-100 ring-1 ring-brand-400' : 'bg-white'}`}>
+                      <p className="font-semibold">
+                        Reducir plazo {resultado.modoAplicado === 'plazo' && <span className="text-brand-600">(aplicado)</span>}
+                      </p>
+                      <p>Mensualidad: {formatoMXN(resultado.comparativo.plazo.mensualidad)}</p>
+                      <p>Plazo nuevo: {resultado.comparativo.plazo.plazoNuevo} meses ({resultado.comparativo.plazo.mesesQueSeAdelanta} menos)</p>
+                    </div>
+                    <div className={`rounded-lg px-2.5 py-2 ${resultado.modoAplicado === 'mensualidad' ? 'bg-brand-100 ring-1 ring-brand-400' : 'bg-white'}`}>
+                      <p className="font-semibold">
+                        Reducir mensualidad {resultado.modoAplicado === 'mensualidad' && <span className="text-brand-600">(aplicado)</span>}
+                      </p>
+                      <p>Mensualidad nueva: {formatoMXN(resultado.comparativo.mensualidad.mensualidad)}</p>
+                      <p>Plazo: {resultado.comparativo.mensualidad.plazoNuevo} meses</p>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
